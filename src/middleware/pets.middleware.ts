@@ -2,6 +2,8 @@ import type { Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
 import { createPetSchema, updatePetSchema } from '../validators/pets.validator.js';
 
+export const demoToken = 'demo-token-123';
+
 const petQuerySchema = z.object({
   species: z.string().trim().optional(),
   adopted: z.enum(['true', 'false']).optional(),
@@ -55,13 +57,20 @@ export const validateNumericId = (req: Request<{ id: string }>, res: Response<{ 
   next();
 };
 
-export const pleaseAuth = (req: Request<{}, unknown, { password?: string }>, res: Response<{ message: string }>, next: NextFunction): void => {
-  const { password } = req.query;
+export const requireToken = (req: Request, res: Response<{ message: string }>, next: NextFunction): void => {
+  const authHeader = req.headers.authorization;
 
-  if (password === 'please') {
-    next();
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    res.status(401).json({ message: 'Unauthorized. Please send a valid bearer token.' });
     return;
   }
 
-  res.status(401).json({ message: 'Unauthorized. Please provide the correct password.' });
+  const token = authHeader.slice('Bearer '.length);
+
+  if (token !== demoToken) {
+    res.status(401).json({ message: 'Unauthorized. Token is invalid.' });
+    return;
+  }
+
+  next();
 };
