@@ -14,9 +14,11 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
+    "better-auth": "^1.7.5",
     "better-sqlite3": "^13.0.3",
     "cors": "^2.8.6",
     "express": "^5.2.1",
+    "kysely": "^0.29.6",
     "zod": "^4.6.5"
   },
   "devDependencies": {
