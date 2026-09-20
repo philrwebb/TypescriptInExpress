@@ -7,10 +7,10 @@ import { auth, initializeAuth } from './lib/auth.js';
 import { authRouter } from './routes/auth.routes.js';
 import { petRouter } from './routes/pets.routes.js';
 
-const app: Express = express();
+export const app: Express = express();
 const port = 8000;
 
-const startServer = async (): Promise<void> => {
+const configureApp = async (): Promise<void> => {
   initializeDatabase();
   await initializeAuth();
 
@@ -24,10 +24,12 @@ const startServer = async (): Promise<void> => {
   app.use((req: Request, res: Response<{ message: string }>): void => {
     res.status(404).json({ message: 'Route not found' });
   });
+};
 
+void configureApp();
+
+if (require.main === module) {
   app.listen(port, (): void => {
     console.log(`Server is running at http://localhost:${port}`);
   });
-};
-
-void startServer();
+}
