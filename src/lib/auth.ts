@@ -1,6 +1,7 @@
 import { Kysely, SqliteDialect } from 'kysely';
 import { betterAuth } from 'better-auth';
 import { db } from '../db.js';
+import { env } from '../config/env.js';
 
 const authDb = new Kysely({
   dialect: new SqliteDialect({
@@ -13,13 +14,13 @@ export const auth = betterAuth({
     db: authDb,
     type: 'sqlite',
   },
-  baseURL: 'http://localhost:8000',
-  secret: process.env.BETTER_AUTH_SECRET ?? 'this-is-a-very-long-development-secret-12345',
+  baseURL: env.baseUrl,
+  secret: env.betterAuthSecret,
   emailAndPassword: {
     enabled: true,
     requireEmailVerification: false,
   },
-  trustedOrigins: ['http://localhost:8000'],
+  trustedOrigins: env.trustedOrigins,
 });
 
 export const initializeAuth = async (): Promise<void> => {

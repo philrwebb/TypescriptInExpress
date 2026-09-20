@@ -1,5 +1,6 @@
-import type { Request, Response } from 'express';
+import type { NextFunction, Request, Response } from 'express';
 import type { Pet } from '../data/pets.js';
+import { AppError } from '../middleware/error-handler.js';
 import { petRepository } from '../repositories/pets.repository.js';
 import type { CreatePetInput, UpdatePetInput } from '../validators/pets.validator.js';
 
@@ -10,57 +11,71 @@ export type PetQueryParams = {
   maxAge?: string;
 };
 
-export const getPets = (req: Request<{}, unknown, {}, PetQueryParams>, res: Response<Pet[]>): void => {
-  const { species, adopted, minAge, maxAge } = req.query;
+export const getPets = (req: Request<{}, unknown, {}, PetQueryParams>, res: Response<Pet[]>, next: NextFunction): void => {
+  try {
+    const { species, adopted, minAge, maxAge } = req.query;
 
-  const pets = petRepository.findAll({
-    species,
-    adopted: adopted === undefined ? undefined : adopted === 'true',
-    minAge: minAge === undefined ? undefined : Number(minAge),
-    maxAge: maxAge === undefined ? undefined : Number(maxAge),
-  });
+    const pets = petRepository.findAll({
+      species,
+      adopted: adopted === undefined ? undefined : adopted === 'true',
+      minAge: minAge === undefined ? undefined : Number(minAge),
+      maxAge: maxAge === undefined ? undefined : Number(maxAge),
+    });
 
-  res.json(pets);
-};
-
-export const getPetById = (req: Request<{ id: string }>, res: Response<Pet | { message: string }>): void => {
-  const { id } = req.params;
-  const pet = petRepository.findById(Number(id));
-
-  if (pet) {
-    res.json(pet);
-  } else {
-    res.status(404).json({ message: 'Pet not found' });
+    res.json(pets);
+  } catch (error) {
+    next(error);
   }
 };
 
-export const createPet = (req: Request<{}, unknown, CreatePetInput>, res: Response<Pet | { message: string }>): void => {
+export const getPetById = (req: Request<{ id: string }>, res: Response<Pet | { message: string }>, next: NextFunction): void => {
+  try {
+    const { id } = req.params;
+    const pet = petRepository.findById(Number(id));
+
+    if (!pet) {
+      throw new AppError(404, 'Pet not found');
+    }
+
+    res.json(pet);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const createPet = (req: Request<{}, unknown, CreatePetInput>, res: Response<Pet | { message: string }>, next: NextFunction): void => {
   try {
     const createdPet = petRepository.create(req.body);
     res.status(201).json(createdPet);
   } catch (error) {
-    res.status(500).json({ message: 'Failed to create pet.' });
+    next(new AppError(500, 'Failed to create pet.'));
   }
 };
 
-export const updatePet = (req: Request<{ id: string }, unknown, UpdatePetInput>, res: Response<Pet | { message: string }>): void => {
-  const updatedPet = petRepository.updateById(Number(req.params.id), req.body);
+export const updatePet = (req: Request<{ id: string }, unknown, UpdatePetInput>, res: Response<Pet | { message: string }>, next: NextFunction): void => {
+  try {
+    const updatedPet = petRepository.updateById(Number(req.params.id), req.body);
 
-  if (!updatedPet) {
-    res.status(404).json({ message: 'Pet not found' });
-    return;
+    if (!updatedPet) {
+      throw new AppError(404, 'Pet not found');
+    }
+
+    res.json(updatedPet);
+  } catch (error) {
+    next(error);
   }
-
-  res.json(updatedPet);
 };
 
-export const deletePet = (req: Request<{ id: string }>, res: Response<{ message: string }>): void => {
-  const deleted = petRepository.deleteById(Number(req.params.id));
+export const deletePet = (req: Request<{ id: string }>, res: Response<{ message: string }>, next: NextFunction): void => {
+  try {
+    const deleted = petRepository.deleteById(Number(req.params.id));
 
-  if (!deleted) {
-    res.status(404).json({ message: 'Pet not found' });
-    return;
+    if (!deleted) {
+      throw new AppError(404, 'Pet not found');
+    }
+
+    res.status(200).json({ message: 'Pet deleted successfully' });
+  } catch (error) {
+    next(error);
   }
-
-  res.status(200).json({ message: 'Pet deleted successfully' });
 };

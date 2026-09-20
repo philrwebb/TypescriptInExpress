@@ -1,13 +1,12 @@
 import request from 'supertest';
 import { beforeAll, describe, expect, it } from 'vitest';
-import { app } from '../index.js';
-import { initializeAuth } from '../lib/auth.js';
-import { initializeDatabase } from '../db.js';
+import { createApp } from '../app.js';
+
+let app: Awaited<ReturnType<typeof createApp>>;
 
 describe('API auth and pet routes', () => {
   beforeAll(async () => {
-    initializeDatabase();
-    await initializeAuth();
+    app = await createApp();
   });
 
   it('rejects requests to /pets without a valid session', async () => {
