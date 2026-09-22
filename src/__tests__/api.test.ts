@@ -54,4 +54,48 @@ describe('API auth and pet routes', () => {
     expect(Array.isArray(response.body)).toBe(true);
     expect(response.body.length).toBeGreaterThan(0);
   });
+
+  it('returns products when the user is authenticated', async () => {
+    const email = `product-user-${Date.now()}@example.com`;
+    const password = 'Password123!';
+    const agent = request.agent(app);
+
+    await agent.post('/api/auth/sign-up/email').send({
+      name: 'Product User',
+      email,
+      password,
+    });
+
+    const response = await agent.get('/products');
+
+    expect(response.status).toBe(200);
+    expect(Array.isArray(response.body)).toBe(true);
+    expect(response.body.length).toBeGreaterThan(0);
+  });
+
+  it('creates a product when the user is authenticated', async () => {
+    const email = `product-creator-${Date.now()}@example.com`;
+    const password = 'Password123!';
+    const agent = request.agent(app);
+
+    await agent.post('/api/auth/sign-up/email').send({
+      name: 'Product Creator',
+      email,
+      password,
+    });
+
+    const response = await agent.post('/products').send({
+      name: 'Laptop Stand',
+      description: 'Adjustable aluminium stand for laptops and monitors.',
+      price: 59.99,
+      stock: 12,
+      sku: `LAPTOP-STAND-${Date.now()}`,
+      isActive: true,
+    });
+
+    expect(response.status).toBe(201);
+    expect(response.body).toHaveProperty('id');
+    expect(response.body.name).toBe('Laptop Stand');
+    expect(response.body.description).toBe('Adjustable aluminium stand for laptops and monitors.');
+  });
 });

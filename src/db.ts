@@ -1,5 +1,6 @@
 import Database from 'better-sqlite3';
 import { seedPets } from './data/pets.js';
+import { seedProducts } from './data/products.js';
 
 const db = new Database('pets.db');
 let isInitialized = false;
@@ -52,6 +53,47 @@ export const initializeDatabase = (): void => {
     });
 
     insertMany(seedPets);
+  }
+
+  db.exec(`
+      CREATE TABLE IF NOT EXISTS products (
+        id INTEGER PRIMARY KEY,
+        name TEXT NOT NULL,
+        description TEXT NOT NULL CHECK(length(description) <= 256),
+        price REAL NOT NULL,
+        stock INTEGER NOT NULL DEFAULT 0,
+        sku TEXT NOT NULL UNIQUE,
+        isActive INTEGER NOT NULL DEFAULT 1 CHECK (isActive IN (0, 1)),
+        createdAt TEXT NOT NULL,
+        updatedAt TEXT
+      );
+  `);
+
+  const productCount = db.prepare('SELECT COUNT(*) as total FROM products').get() as { total: number };
+
+  if (productCount.total === 0) {
+    const insertProduct = db.prepare(`
+      INSERT INTO products (id, name, description, price, stock, sku, isActive, createdAt, updatedAt)
+      VALUES (@id, @name, @description, @price, @stock, @sku, @isActive, @createdAt, @updatedAt)
+    `);
+
+    const insertManyProducts = db.transaction((products: typeof seedProducts) => {
+      for (const product of products) {
+        insertProduct.run({
+          id: product.id,
+          name: product.name,
+          description: product.description,
+          price: product.price,
+          stock: product.stock,
+          sku: product.sku,
+          isActive: product.isActive ? 1 : 0,
+          createdAt: new Date(product.createdAt).toISOString(),
+          updatedAt: product.updatedAt ? new Date(product.updatedAt).toISOString() : null,
+        });
+      }
+    });
+
+    insertManyProducts(seedProducts);
   }
 
   isInitialized = true;

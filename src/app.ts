@@ -6,6 +6,7 @@ import { initializeDatabase } from './db.js';
 import { auth, initializeAuth } from './lib/auth.js';
 import { authRouter } from './routes/auth.routes.js';
 import { petRouter } from './routes/pets.routes.js';
+import { productRouter } from './routes/products.routes.js';
 import { errorHandler, notFoundHandler } from './middleware/error-handler.js';
 
 export const createApp = async (): Promise<Express> => {
@@ -20,6 +21,7 @@ export const createApp = async (): Promise<Express> => {
   app.use('/api/auth', toNodeHandler(auth.handler));
   app.use('/', authRouter);
   app.use('/pets', petRouter);
+  app.use('/products', productRouter);
 
   app.use(notFoundHandler);
   app.use(errorHandler);

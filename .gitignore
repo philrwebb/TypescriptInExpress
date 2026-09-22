@@ -7,3 +7,5 @@ coverage/
 pets.db
 pets.db-shm
 pets.db-wal
+.auth-cookie.txt
+*.sh
